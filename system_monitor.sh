@@ -1,7 +1,10 @@
 #!/bin/bash
-#Maintainer DevOpsdecode@gmail.com
-#This script will monitoring the CPU, RAM and Storage usage of the system
-#Variables 
+
+# System Monitoring Script
+# Author: Anuja Ayare
+# Description: Monitors system resources and generates alerts
+
+# Configuration
 CPU_THRESHOLD=80
 RAM_THRESHOLD=80
 STORAGE_THRESHOLD=80
