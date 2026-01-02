@@ -1,0 +1,3 @@
+## corn job syntax for system monitoring the run every 1 minute
+
+*/01 * * * * root /bin/bash /home/vboxuser/devops/git/github/nov-2025/project2/system-monitoring/system_monitor.sh >> /home/vboxuser/devops/git/github/nov-2025/project2/system-monitoring/system_monitor_latest.log 2>&1
