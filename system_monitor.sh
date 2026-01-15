@@ -1,49 +1,97 @@
 #!/bin/bash
 
-# System Monitoring Script
-# Author: Anuja Ayare
-# Description: Monitors system resources and generates alerts
-
+# ===============================
 # Configuration
+# ===============================
+LOG_FILE="/tmp/system_monitor.log"
+EMAIL_TO="admin@example.com"     # change this
+HOSTNAME=$(hostname)
+
 CPU_THRESHOLD=80
-RAM_THRESHOLD=80
-STORAGE_THRESHOLD=80
-EMAIL_ID="ayareanuja0903@gmail.com"
-APP_PASSWORD=""
+MEM_THRESHOLD=80
+DISK_THRESHOLD=85
 
-echo "CPU, RAM and Storage usage of the system"
-echo "The current date and time $(date)"
+DATE=$(date)
 
-#Function for sending the email to gmail via curl
-send_email() {
-    SUBJECT="$1"
-    BODY="$2"
-    curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd \
-      --mail-from "$EMAIL_ID" \
-      --mail-rcpt "$EMAIL_ID" \
-      --user "$EMAIL_ID:$APP_PASSWORD" \
-      -T <(echo -e "From: $EMAIL_ID\nTo: $EMAIL_ID\nSubject: $SUBJECT\n\n$BODY")
-}
+# ===============================
+# Collect Metrics
+# ===============================
+CPU_USAGE=$(top -bn1 | awk '/Cpu/ {print int(100 - $8)}')
+MEM_USAGE=$(free | awk '/Mem/ {print int($3/$2 * 100)}')
+DISK_USAGE=$(df / | awk 'NR==2 {print int($5)}')
 
-#Check the cpu usage based on the current usage and send the email to gmail using the function using the condition on 80% threshold with if condition
-CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
-CPU_USAGE_INT=${CPU_USAGE%.*}
-if [ $CPU_USAGE_INT -gt $CPU_THRESHOLD ]; then
-    send_email "CPU Usage Alert" "CPU usage is above the threshold of $CPU_THRESHOLD%. Current usage: $CPU_USAGE_INT%"
+STATUS="HEALTHY"
+ALERT="NO"
+
+if [ "$CPU_USAGE" -ge "$CPU_THRESHOLD" ] || \
+   [ "$MEM_USAGE" -ge "$MEM_THRESHOLD" ] || \
+   [ "$DISK_USAGE" -ge "$DISK_THRESHOLD" ]; then
+    STATUS="ATTENTION REQUIRED"
+    ALERT="YES"
 fi
 
-#Check the RAM usage based on the current usage and send the email to gmail using the function using the condition on 80% threshold with if condition
-RAM_USAGE=$(free | grep Mem | awk '{print $3/$2 * 100.0}')
-RAM_USAGE_INT=${RAM_USAGE%.*}
-if [ $RAM_USAGE_INT -gt $RAM_THRESHOLD ]; then
-    send_email "RAM Usage Alert" "RAM usage is above the threshold of $RAM_THRESHOLD%. Current usage: $RAM_USAGE_INT%"
-fi
+# ===============================
+# Log Output
+# ===============================
+{
+echo "------------------------"
+echo "Date: $DATE"
+echo "CPU Usage: $CPU_USAGE%"
+echo "Memory Usage: $MEM_USAGE%"
+echo "Disk Usage: $DISK_USAGE%"
+echo "System Status: $STATUS"
+echo "------------------------"
+echo ""
+} >> "$LOG_FILE"
 
-#Check the Storage usage based on the current usage and send the email to gmail using the function using the condition on 80% threshold with if condition
-STORAGE_USAGE=$(df -h / | awk 'NR==2 {print $5}' | tr -d '%')
-STORAGE_USAGE_INT=${STORAGE_USAGE%.*}   
-if [ $STORAGE_USAGE_INT -gt $STORAGE_THRESHOLD ]; then
-    send_email "Storage Usage Alert" "Storage usage is above the threshold of $STORAGE_THRESHOLD%. Current usage: $STORAGE_USAGE_INT%"
-fi
+# ===============================
+# Email Alert (HTML Table)
+# ===============================
+if [ "$ALERT" = "YES" ]; then
 
-echo "System monitoring completed successfully."
+EMAIL_BODY=$(cat <<EOF
+<html>
+<body>
+<h2 style="color:red;">System Alert Report</h2>
+
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+<tr style="background-color:#f2f2f2;">
+<th>Metric</th>
+<th>Current Usage</th>
+<th>Threshold</th>
+</tr>
+
+<tr>
+<td>CPU Usage</td>
+<td>${CPU_USAGE}%</td>
+<td>${CPU_THRESHOLD}%</td>
+</tr>
+
+<tr>
+<td>Memory Usage</td>
+<td>${MEM_USAGE}%</td>
+<td>${MEM_THRESHOLD}%</td>
+</tr>
+
+<tr>
+<td>Disk Usage</td>
+<td>${DISK_USAGE}%</td>
+<td>${DISK_THRESHOLD}%</td>
+</tr>
+
+</table>
+
+<br>
+<b>Host:</b> $HOSTNAME <br>
+<b>Date:</b> $DATE <br>
+<b>Status:</b> <span style="color:red;">$STATUS</span>
+
+</body>
+</html>
+EOF
+)
+
+echo "$EMAIL_BODY" | mail -a "Content-Type: text/html" \
+-s "🚨 ALERT: System Health Issue on $HOSTNAME" "$EMAIL_TO"
+
+fi
