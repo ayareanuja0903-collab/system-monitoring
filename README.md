@@ -1,10 +1,17 @@
 🖥️ System Monitor with AI Alerting (system_monitor.sh)
+
 📌 Project Overview
-This project provides a Bash-based system monitoring and alerting solution for Linux/Ubuntu servers.The script continuously monitors CPU, Memory, and Disk usage, makes AI-style decisions using thresholds, and sends email alerts in a professional HTML table format when issues are detected.
+This project provides a Bash-based system monitoring and alerting solution for Linux/Ubuntu servers.
+The script continuously monitors CPU, Memory, and Disk usage, makes AI-style decisions using thresholds, 
+and sends email alerts in a professional HTML table format when issues are detected.
+
 This project is ideal for: - DevOps & Linux practice - Server health monitoring - Learning cron automation - Resume / GitHub projects
 
 📂 Project Structure
-.├── system_monitor.sh      # Monitoring & alerting script├── README.md              # Project documentation└── system_monitor.log     # Generated log file
+.├── system_monitor.sh      
+# Monitoring & alerting script├── README.md              
+# Project documentation└── system_monitor.log     
+# Generated log file
 
 ⚙️ Features
 	•	✅ CPU usage monitoring
